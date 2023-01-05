@@ -15,11 +15,19 @@ func (b *bye403) manipulateHeaders() [][]string {
 		"172.16.0.1", "192.168.1.0", "192.168.1.1",
 	}
 
+	overwrite := []string{
+		"X-Original-URL", "X-Rewrite-URL",
+	}
+	
 	var header [][]string
 	for _, h := range headers {
 		for _, v := range values {
 			header = append(header, []string{h, v})
 		}
+	}
+
+	for _, h := range overwrite {
+		header = append(header, []string{h, b.path})
 	}
 
 	return header

