@@ -5,58 +5,31 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"sync"
 	"time"
 )
 
-// use for header manipulation?
-// fix this up
-func (b *bye403) createRequests(url string, paths []string) {
-	headers := b.manipulateHeaders()
-
-	ch := make(chan *http.Request, len(headers) * len(paths))
-	var wg sync.WaitGroup
-	for _, h := range headers {
-		for _, p := range paths {
-			wg.Add(1)
-			go func (h []string, p string) {
-				defer wg.Done()
-				req, err := http.NewRequest(http.MethodGet, url + p, nil)
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-				req = b.browserHeaders(req)
-				req.Header.Set(h[0], h[1])
-				ch <- req
-			}(h, p)
-		}
-	}
-	wg.Wait()
-	close(ch)
-	for c := range ch {
-		fmt.Println(c)
-	}
-}
-
-// verb manipulation through mode param
-// different situation when manipulating headers? this could be for paths and verbs
-func (b *bye403) request(url string, mode string) error {
+func (b *bye403) request(url, method string, header []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(b.config.timeout)*time.Millisecond)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, mode, url, nil)
+	req, err := http.NewRequestWithContext(ctx, method, url, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request for %s: %w", url, err)
 	}
 
 	req = b.browserHeaders(req)
+	// check if we're doing header manipulation
+	if len(header) > 0 {
+		req.Header.Set(header[0], header[1])
+	}
 
+	// custom client
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to get response for %s: %w", url, err)
 	}
 
+	// fix, maybe return?
 	if resp.StatusCode != 403 {
 		fmt.Printf("http response: %d for %s\n", resp.StatusCode, url)
 	}

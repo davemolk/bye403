@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"log"
 	"net/url"
+	"os"
 )
 
 func (b *bye403) validateURL(target string) {
@@ -27,4 +29,16 @@ func (b *bye403) parseURL(target string) (string, string) {
 		log.Fatal(err)
 	}
 	return u.Host, u.Path
+}
+
+func (b *bye403) input() string {
+	s := bufio.NewScanner(os.Stdin) 
+	var u string
+	for s.Scan() {
+		u = s.Text()
+	}
+	if s.Err() != nil {
+		log.Fatal(s.Err())
+	}
+	return u
 }
