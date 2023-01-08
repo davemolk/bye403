@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"strconv"
+	"strings"
 )
 
 func (b *bye403) validateURL(target string) {
@@ -41,4 +43,20 @@ func (b *bye403) input() string {
 		log.Fatal(s.Err())
 	}
 	return u
+}
+
+func (b *bye403) statusCodes() []int {
+	if b.config.statusCode == "" {
+		return nil
+	}
+	codes := strings.Split(b.config.statusCode, " ")
+	sc := make([]int, len(codes))
+	for _, code := range codes {
+		c, err := strconv.Atoi(code)
+		if err != nil {
+			log.Fatal(err)
+		}
+		sc = append(sc, c)
+	}
+	return sc
 }

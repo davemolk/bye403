@@ -14,6 +14,8 @@ type config struct {
 	method bool
 	os string
 	path bool
+	silent bool
+	statusCode string
 	timeout int
 	url string
 	validate bool
@@ -23,6 +25,7 @@ type bye403 struct {
 	config config
 	host string
 	path string
+	sc []int
 }
 
 func main() {
@@ -36,6 +39,8 @@ func main() {
 	flag.IntVar(&config.concurrency, "c", 10, "number of concurrent requests")
 	flag.BoolVar(&config.input, "i", false, "read url off stdin")
 	flag.StringVar(&config.os, "os", "w", "operating system")
+	flag.BoolVar(&config.silent, "s", true, "silence error reporting")
+	flag.StringVar(&config.statusCode, "sc", "", "filter output by status code")
 	flag.IntVar(&config.timeout, "t", 5000, "request timeout (in ms)")
 	flag.StringVar(&config.url, "u", "https://www.example.com/secret", "base url")
 	flag.BoolVar(&config.validate, "v", true, "validate url before running program")
@@ -54,6 +59,10 @@ func main() {
 		b.validateOS(config.os)
 	}
 
+	if config.statusCode != "" {
+		b.sc = b.statusCodes()
+	}
+
 	b.host, b.path = b.parseURL(config.url)
 
 	var wg sync.WaitGroup
@@ -68,9 +77,7 @@ func main() {
 				err := b.request(url, method, nil)
 				if err != nil {
 					fmt.Println(err)
-					return
 				}
-				fmt.Printf("path success: %s\n", url)
 			}(p, http.MethodGet, nil)
 			wg.Add(1)
 			go func(path, method string, headers []string) {
@@ -79,9 +86,7 @@ func main() {
 				err := b.request(url, method, headers)
 				if err != nil {
 					fmt.Println(err)
-					return
 				}
-				fmt.Printf("path success: %s\n", url)
 			}(p, http.MethodGet, nil)
 		}
 	}
@@ -94,9 +99,7 @@ func main() {
 				err := b.request(url, method, headers)
 				if err != nil {
 					fmt.Println(err)
-					return
 				}
-				fmt.Printf("headers success: %v:%v\n", headers[0], headers[1])
 			}(config.url, http.MethodGet, h)
 		}
 	}
@@ -108,9 +111,7 @@ func main() {
 				err := b.request(url, method, headers)
 				if err != nil {
 					fmt.Println(err)
-					return
 				}
-				fmt.Printf("method success: %s\n", method)
 			}(config.url, m, nil)
 		} 
 	}

@@ -14,7 +14,10 @@ func (b *bye403) request(url, method string, header []string) error {
 
 	req, err := http.NewRequestWithContext(ctx, method, url, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create request for %s: %w", url, err)
+		if !b.config.silent {
+			return fmt.Errorf("failed to create request for %s: %w", url, err)
+		}
+		return nil
 	}
 
 	req = b.browserHeaders(req)
@@ -26,15 +29,30 @@ func (b *bye403) request(url, method string, header []string) error {
 	// custom client
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to get response for %s: %w", url, err)
+		if !b.config.silent {
+			return fmt.Errorf("failed to get response for %s: %w", url, err)
+		}
+		return nil
 	}
 
-	// fix, maybe return?
 	if resp.StatusCode != 403 {
-		fmt.Printf("http response: %d for %s\n", resp.StatusCode, url)
+		switch {
+		case b.config.statusCode != "":
+			for _, v := range b.sc {
+				if v == resp.StatusCode {
+					fmt.Printf("%d for %s request and %s headers\n", resp.StatusCode, method, header)
+					fmt.Println(url)
+					fmt.Println()
+				}
+			}
+		default:
+			fmt.Printf("%d for %s request and %s headers\n", resp.StatusCode, method, header)
+					fmt.Println(url)
+					fmt.Println()
+		}
 	}
 	defer resp.Body.Close()
-	
+
 	return nil
 }
 
