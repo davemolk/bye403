@@ -25,8 +25,8 @@ func (b *bye403) front(u string) []string {
 
 func (b *bye403) back(u string) []string {
 	trail := []string{
-		"/", "..;/", "/..;/", "%20", "%09", "%00", 
-		".json", ".css", ".html", "?", "??", "???", 
+		"/", "..;/", "/..;/", "%20", "%09", "%00",
+		".json", ".css", ".html", "?", "??", "???",
 		"?testparam", "#", "#test", "/.", "//", ";/",
 		"/~",
 	}
@@ -67,6 +67,6 @@ func (b *bye403) paths(target string) []string {
 	paths = append(paths, b.front(b.path)...)
 	paths = append(paths, b.back(b.path)...)
 	paths = append(paths, b.spongeb(b.path))
-	
+
 	return paths
 }

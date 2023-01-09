@@ -26,8 +26,8 @@ func (b *bye403) request(url, method string, header []string) error {
 		req.Header.Set(header[0], header[1])
 	}
 
-	// custom client
-	resp, err := http.DefaultClient.Do(req)
+	// using custom client
+	resp, err := b.client.Do(req)
 	if err != nil {
 		if !b.config.silent {
 			return fmt.Errorf("failed to get response for %s: %w", url, err)
@@ -47,8 +47,8 @@ func (b *bye403) request(url, method string, header []string) error {
 			}
 		default:
 			fmt.Printf("%d for %s request and %s headers\n", resp.StatusCode, method, header)
-					fmt.Println(url)
-					fmt.Println()
+			fmt.Println(url)
+			fmt.Println()
 		}
 	}
 	defer resp.Body.Close()
@@ -62,7 +62,6 @@ func (b *bye403) browserHeaders(r *http.Request) *http.Request {
 	}
 	return b.chrome(r)
 }
-
 
 func (b *bye403) ff(r *http.Request) *http.Request {
 	uAgent := b.ffUA()
