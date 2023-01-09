@@ -1,17 +1,16 @@
 package main
 
-import "net/http"
-
-// skip MethodDelete
+// skip Delete
 func (b *bye403) verbs() []string {
 	return []string{
-		http.MethodGet,
-		http.MethodHead,
-		http.MethodPost,
-		http.MethodPut,
-		http.MethodPatch,
-		http.MethodConnect,
-		http.MethodOptions,
-		http.MethodTrace,
+		"ACL", "BASELINE-CONTROL", "BIND", "CHECKIN",
+		"CHECKOUT", "CONNECT", "COPY", "GET", "HEAD",
+		"LABEL", "LINK", "LOCK", "MERGE", "MKACTIVITY",
+		"MKCALENDAR", "MKCOL", "MKREDIRECTREF", "MKWORKSPACE",
+		"MOVE", "OPTIONS", "ORDERPATCH", "PATCH", "POST", "PRI",
+		"PROPFIND", "PROPPATCH", "PUT", "QUERY", "REBIND",
+		"REPORT", "SEARCH", "TRACE", "UNBIND", "UNCHECKOUT",
+		"UNLINK", "UNLOCK", "UPDATE", "UPDATEREDIRECTREF",
+		"VERSION-CONTROL", "FOOBAR",
 	}
 }

@@ -75,20 +75,24 @@ func main() {
 	b.client = b.customClient(config.proxy, config.insecure, config.redirects)
 
 	var wg sync.WaitGroup
-	// put in semaphore
+	tokens := make(chan struct{}, config.concurrency)
 	if config.path {
 		paths := b.paths(config.url)
 		for _, p := range paths {
 			wg.Add(1)
+			tokens <- struct{}{}
 			go func(path, method string, headers []string) {
 				defer wg.Done()
 				url := fmt.Sprintf("https://%s%s", b.host, path)
 				err := b.request(url, method, nil)
 				if err != nil {
-					fmt.Println(err)
+					fmt.Println(err) // will be nil unless silent=false
 				}
+				<-tokens
 			}(p, http.MethodGet, nil)
+
 			wg.Add(1)
+			tokens <- struct{}{}
 			go func(path, method string, headers []string) {
 				defer wg.Done()
 				url := fmt.Sprintf("http://%s%s", b.host, path)
@@ -96,6 +100,7 @@ func main() {
 				if err != nil {
 					fmt.Println(err)
 				}
+				<-tokens
 			}(p, http.MethodGet, nil)
 		}
 	}
@@ -103,24 +108,28 @@ func main() {
 		headers := b.manipulateHeaders()
 		for _, h := range headers {
 			wg.Add(1)
+			tokens <- struct{}{}
 			go func(url, method string, headers []string) {
 				defer wg.Done()
 				err := b.request(url, method, headers)
 				if err != nil {
 					fmt.Println(err)
 				}
+				<-tokens
 			}(config.url, http.MethodGet, h)
 		}
 	}
 	if config.method {
 		for _, m := range b.verbs() {
 			wg.Add(1)
+			tokens <- struct{}{}
 			go func(url, method string, headers []string) {
 				defer wg.Done()
 				err := b.request(url, method, headers)
 				if err != nil {
 					fmt.Println(err)
 				}
+				<-tokens
 			}(config.url, m, nil)
 		}
 	}
