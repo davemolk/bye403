@@ -74,64 +74,73 @@ func main() {
 
 	b.client = b.customClient(config.proxy, config.insecure, config.redirects)
 
-	var wg sync.WaitGroup
-	tokens := make(chan struct{}, config.concurrency)
-	if config.path {
-		paths := b.paths(config.url)
-		for _, p := range paths {
-			wg.Add(1)
-			tokens <- struct{}{}
-			go func(path, method string, headers []string) {
-				defer wg.Done()
-				url := fmt.Sprintf("https://%s%s", b.host, path)
-				err := b.request(url, method, nil)
-				if err != nil {
-					fmt.Println(err) // will be nil unless silent=false
-				}
-				<-tokens
-			}(p, http.MethodGet, nil)
+	wait := b.bye403()
+	<-wait 
+}
 
-			wg.Add(1)
-			tokens <- struct{}{}
-			go func(path, method string, headers []string) {
-				defer wg.Done()
-				url := fmt.Sprintf("http://%s%s", b.host, path)
-				err := b.request(url, method, headers)
-				if err != nil {
-					fmt.Println(err)
-				}
-				<-tokens
-			}(p, http.MethodGet, nil)
+func (b *bye403) bye403() <-chan struct{} {
+	done := make(chan struct{}, 1)
+	var wg sync.WaitGroup
+	tokens := make(chan struct{}, b.config.concurrency)
+	wg.Add(3) // path, header, and method manipulation
+	go func() {
+		defer wg.Done()
+		if b.config.path {
+			paths := b.paths(b.config.url)
+			for _, p := range paths {
+				wg.Add(1)
+				tokens <- struct{}{}
+				go func(path, method string, headers []string) {
+					defer wg.Done()
+					url := fmt.Sprintf("https://%s%s", b.host, path)
+					b.request(url, method, nil)
+					<-tokens
+				}(p, http.MethodGet, nil)
+
+				wg.Add(1)
+				tokens <- struct{}{}
+				go func(path, method string, headers []string) {
+					defer wg.Done()
+					url := fmt.Sprintf("http://%s%s", b.host, path)
+					b.request(url, method, headers)
+					<-tokens
+				}(p, http.MethodGet, nil)
+			}
 		}
-	}
-	if config.headers {
-		headers := b.manipulateHeaders()
-		for _, h := range headers {
-			wg.Add(1)
-			tokens <- struct{}{}
-			go func(url, method string, headers []string) {
-				defer wg.Done()
-				err := b.request(url, method, headers)
-				if err != nil {
-					fmt.Println(err)
-				}
-				<-tokens
-			}(config.url, http.MethodGet, h)
+	}()
+	go func() {
+		defer wg.Done()
+		if b.config.headers {
+			headers := b.manipulateHeaders()
+			for _, h := range headers {
+				wg.Add(1)
+				tokens <- struct{}{}
+				go func(url, method string, headers []string) {
+					defer wg.Done()
+					b.request(url, method, headers)
+					<-tokens
+				}(b.config.url, http.MethodGet, h)
+			}
 		}
-	}
-	if config.method {
-		for _, m := range b.verbs() {
-			wg.Add(1)
-			tokens <- struct{}{}
-			go func(url, method string, headers []string) {
-				defer wg.Done()
-				err := b.request(url, method, headers)
-				if err != nil {
-					fmt.Println(err)
-				}
-				<-tokens
-			}(config.url, m, nil)
+	}()
+	go func() {
+		defer wg.Done()
+		if b.config.method {
+			for _, m := range b.methods() {
+				wg.Add(1)
+				tokens <- struct{}{}
+				go func(url, method string, headers []string) {
+					defer wg.Done()
+					b.request(url, method, headers)
+					<-tokens
+				}(b.config.url, m, nil)
+			}
 		}
-	}
-	wg.Wait()
+	}()
+	go func() {
+		defer close(done)
+		wg.Wait()
+	}()
+
+	return done
 }

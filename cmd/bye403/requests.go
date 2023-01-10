@@ -8,16 +8,16 @@ import (
 	"time"
 )
 
-func (b *bye403) request(url, method string, header []string) error {
+func (b *bye403) request(url, method string, header []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(b.config.timeout)*time.Millisecond)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, method, url, nil)
 	if err != nil {
 		if !b.config.silent {
-			return fmt.Errorf("failed to create request for %s: %w", url, err)
+			fmt.Printf("failed to create request for %s: %v\n", url, err)
 		}
-		return nil
+		return
 	}
 
 	req = b.browserHeaders(req)
@@ -30,9 +30,9 @@ func (b *bye403) request(url, method string, header []string) error {
 	resp, err := b.client.Do(req)
 	if err != nil {
 		if !b.config.silent {
-			return fmt.Errorf("failed to get response for %s: %w", url, err)
+			fmt.Printf("failed to get response for %s: %v\n", url, err)
 		}
-		return nil
+		return
 	}
 
 	if resp.StatusCode != 403 {
@@ -51,9 +51,7 @@ func (b *bye403) request(url, method string, header []string) error {
 			fmt.Println()
 		}
 	}
-	defer resp.Body.Close()
-
-	return nil
+	resp.Body.Close()
 }
 
 func (b *bye403) browserHeaders(r *http.Request) *http.Request {

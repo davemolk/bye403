@@ -1,7 +1,7 @@
 package main
 
 // skip Delete
-func (b *bye403) verbs() []string {
+func (b *bye403) methods() []string {
 	return []string{
 		"ACL", "BASELINE-CONTROL", "BIND", "CHECKIN",
 		"CHECKOUT", "CONNECT", "COPY", "GET", "HEAD",
