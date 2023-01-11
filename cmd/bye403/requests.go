@@ -21,8 +21,11 @@ func (b *bye403) request(url, method string, header []string) {
 	}
 
 	req = b.browserHeaders(req)
+
 	// check if we're doing header manipulation
+	var headManip bool
 	if len(header) > 0 {
+		headManip = true
 		req.Header.Set(header[0], header[1])
 	}
 
@@ -38,20 +41,28 @@ func (b *bye403) request(url, method string, header []string) {
 	if resp.StatusCode != 403 {
 		switch {
 		case b.config.statusCode != "":
-			for _, v := range b.sc {
-				if v == resp.StatusCode {
-					fmt.Printf("%d for %s request and %s headers\n", resp.StatusCode, method, header)
-					fmt.Println(url)
-					fmt.Println()
+			for _, code := range b.sc {
+				if code == resp.StatusCode {
+					b.output(resp.StatusCode, method, header, resp.Header, url, headManip)
 				}
 			}
 		default:
-			fmt.Printf("%d for %s request and %s headers\n", resp.StatusCode, method, header)
-			fmt.Println(url)
-			fmt.Println()
+			b.output(resp.StatusCode, method, header, resp.Header, url, headManip)
 		}
 	}
 	resp.Body.Close()
+}
+
+func (b *bye403) output(code int, method string, reqHeaders []string, respHeaders http.Header, url string, headManip bool) {
+	fmt.Printf("%d: %s request\n", code, method)
+	fmt.Println(url)
+	if headManip {
+		fmt.Printf("headers: %s\n", reqHeaders)
+	}
+	if b.config.rHeaders {
+		fmt.Printf("response headers: %s\n", respHeaders)
+	}
+	fmt.Println()
 }
 
 func (b *bye403) browserHeaders(r *http.Request) *http.Request {

@@ -17,6 +17,7 @@ type config struct {
 	path        bool
 	proxy       string
 	redirects   bool
+	rHeaders    bool
 	silent      bool
 	statusCode  string
 	timeout     int
@@ -35,9 +36,9 @@ type bye403 struct {
 func main() {
 	var config config
 	// techniques
-	flag.BoolVar(&config.headers, "h", false, "manipulate headers")
-	flag.BoolVar(&config.method, "m", false, "manipulate method")
-	flag.BoolVar(&config.path, "p", false, "manipulate path")
+	flag.BoolVar(&config.headers, "h", true, "manipulate headers")
+	flag.BoolVar(&config.method, "m", true, "manipulate method")
+	flag.BoolVar(&config.path, "p", true, "manipulate path")
 
 	// config
 	flag.IntVar(&config.concurrency, "c", 10, "number of concurrent requests")
@@ -46,10 +47,11 @@ func main() {
 	flag.StringVar(&config.os, "os", "w", "operating system")
 	flag.StringVar(&config.proxy, "proxy", "", "proxy to use")
 	flag.BoolVar(&config.redirects, "r", true, "allow redirects")
+	flag.BoolVar(&config.rHeaders, "rh", false, "include response headers in output")
 	flag.BoolVar(&config.silent, "s", true, "silence error reporting")
-	flag.StringVar(&config.statusCode, "sc", "", "filter output by status code")
+	flag.StringVar(&config.statusCode, "sc", "", "filter output by status code(s)")
 	flag.IntVar(&config.timeout, "t", 5000, "request timeout (in ms)")
-	flag.StringVar(&config.url, "u", "https://www.example.com/secret", "base url")
+	flag.StringVar(&config.url, "u", "https://www.example.com/secret", "target url")
 	flag.BoolVar(&config.validate, "v", true, "validate url before running program")
 	flag.Parse()
 
@@ -75,7 +77,7 @@ func main() {
 	b.client = b.customClient(config.proxy, config.insecure, config.redirects)
 
 	wait := b.bye403()
-	<-wait 
+	<-wait
 }
 
 func (b *bye403) bye403() <-chan struct{} {

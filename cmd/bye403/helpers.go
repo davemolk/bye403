@@ -73,8 +73,6 @@ func (b *bye403) customClient(proxy string, insecure, redirect bool) *http.Clien
 			log.Fatal(err)
 		}
 
-		// tr := http.DefaultTransport.(*http.Transport).Clone()
-		// tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
 		tr.Proxy = http.ProxyURL(parsed)
 
 		return &http.Client{
