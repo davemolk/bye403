@@ -116,13 +116,20 @@ func (b *bye403) bye403() <-chan struct{} {
 			headers := b.manipulateHeaders()
 			for _, h := range headers {
 				wg.Add(1)
-				tokens <- struct{}{}
+				tokens <-struct{}{}
 				go func(url, method string, headers []string) {
 					defer wg.Done()
 					b.request(url, method, headers)
 					<-tokens
 				}(b.config.url, http.MethodGet, h)
 			}
+			wg.Add(1)
+			tokens <-struct{}{}
+			go func(url, method string, headers []string) {
+				defer wg.Done()
+				b.request(url, method, headers)
+				<-tokens
+			}(b.config.url, http.MethodPost, []string{"X-HTTP-Method-Override", "PUT"})
 		}
 	}()
 	go func() {

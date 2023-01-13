@@ -5,6 +5,10 @@ func (b *bye403) manipulateHeaders() [][]string {
 		"X-Custom-IP-Authorization", "X-Forwarded-For",
 		"X-Forward-For", "X-Remote-IP", "X-Originating-IP",
 		"X-Remote-Addr", "X-Client-IP", "X-Real-IP",
+		"X-Forwarded", "Forwarded-For", "X-ProxyUser-Ip",
+		"Client-IP", "True-Client-IP", "Cluster-Client-IP",
+		"X-Original-URL", "X-ProxyUser-IP", "X-Host",
+		"Host", "X-Forwarded-Host", "Forwarded-Host",
 	}
 
 	values := []string{
@@ -29,6 +33,6 @@ func (b *bye403) manipulateHeaders() [][]string {
 	for _, h := range overwrite {
 		header = append(header, []string{h, b.path})
 	}
-
+	
 	return header
 }
