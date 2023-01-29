@@ -37,6 +37,13 @@ func (b *bye403) request(url, method string, header []string) {
 		}
 		return
 	}
+	defer resp.Body.Close()
+
+	for _, sc := range b.ignore {
+		if resp.StatusCode == sc {
+			return
+		}
+	}
 
 	if resp.StatusCode != 403 {
 		switch {
@@ -50,7 +57,6 @@ func (b *bye403) request(url, method string, header []string) {
 			b.output(resp.StatusCode, method, header, resp.Header, url, headManip)
 		}
 	}
-	resp.Body.Close()
 }
 
 func (b *bye403) output(code int, method string, reqHeaders []string, respHeaders http.Header, url string, headManip bool) {

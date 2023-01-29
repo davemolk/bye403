@@ -33,6 +33,6 @@ func (b *bye403) manipulateHeaders() [][]string {
 	for _, h := range overwrite {
 		header = append(header, []string{h, b.path})
 	}
-	
+
 	return header
 }

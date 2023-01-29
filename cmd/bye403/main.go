@@ -10,6 +10,7 @@ import (
 type config struct {
 	concurrency int
 	headers     bool
+	ignore      string
 	input       bool
 	insecure    bool
 	method      bool
@@ -29,6 +30,7 @@ type bye403 struct {
 	client *http.Client
 	config config
 	host   string
+	ignore []int
 	path   string
 	sc     []int
 }
@@ -43,6 +45,7 @@ func main() {
 	// config
 	flag.IntVar(&config.concurrency, "c", 10, "number of concurrent requests")
 	flag.BoolVar(&config.input, "i", false, "read url off stdin")
+	flag.StringVar(&config.ignore, "ignore", "", "status code(s) to ignore in output (403 ignored by default)")
 	flag.BoolVar(&config.insecure, "insecure", true, "accept any certificate and host name presented by server")
 	flag.StringVar(&config.os, "os", "w", "operating system")
 	flag.StringVar(&config.proxy, "proxy", "", "proxy to use")
@@ -69,7 +72,10 @@ func main() {
 	}
 
 	if config.statusCode != "" {
-		b.sc = b.statusCodes()
+		b.sc = b.statusCodes(config.statusCode)
+	}
+	if config.ignore != "" {
+		b.ignore = b.statusCodes(config.ignore)
 	}
 
 	b.host, b.path = b.parseURL(config.url)
@@ -116,7 +122,7 @@ func (b *bye403) bye403() <-chan struct{} {
 			headers := b.manipulateHeaders()
 			for _, h := range headers {
 				wg.Add(1)
-				tokens <-struct{}{}
+				tokens <- struct{}{}
 				go func(url, method string, headers []string) {
 					defer wg.Done()
 					b.request(url, method, headers)
@@ -124,7 +130,7 @@ func (b *bye403) bye403() <-chan struct{} {
 				}(b.config.url, http.MethodGet, h)
 			}
 			wg.Add(1)
-			tokens <-struct{}{}
+			tokens <- struct{}{}
 			go func(url, method string, headers []string) {
 				defer wg.Done()
 				b.request(url, method, headers)

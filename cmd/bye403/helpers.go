@@ -47,11 +47,8 @@ func (b *bye403) input() string {
 	return u
 }
 
-func (b *bye403) statusCodes() []int {
-	if b.config.statusCode == "" {
-		return nil
-	}
-	codes := strings.Split(b.config.statusCode, " ")
+func (b *bye403) statusCodes(data string) []int {
+	codes := strings.Split(data, " ")
 	sc := make([]int, len(codes))
 	for _, code := range codes {
 		c, err := strconv.Atoi(code)

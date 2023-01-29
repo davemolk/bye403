@@ -55,6 +55,8 @@ Usage of bye403:
     	manipulate headers
   -i bool
     	read url off stdin
+  -ignore string
+    	status code responses to ignore (403 is ignored by default)
   -insecure bool
     	accept any certificate and host name presented by server
   -m bool
