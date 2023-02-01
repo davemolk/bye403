@@ -49,11 +49,11 @@ func (b *bye403) input() string {
 
 func (b *bye403) statusCodes(data string) []int {
 	codes := strings.Split(data, " ")
-	sc := make([]int, len(codes))
+	var sc []int
 	for _, code := range codes {
 		c, err := strconv.Atoi(code)
 		if err != nil {
-			log.Fatal(err)
+			continue
 		}
 		sc = append(sc, c)
 	}
